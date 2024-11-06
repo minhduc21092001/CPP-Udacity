@@ -4776,3 +4776,166 @@ int main()
     return 0;
 }
 ```
+![alt text](image-888.png)
+```C++
+#include <iostream>
+#include <thread>
+#include <vector>
+
+void printHello()
+{
+    // perform work
+    std::cout << "Hello from Worker thread #" << std::this_thread::get_id() << std::endl;
+}
+
+int main()
+{
+    // create threads
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < 5; ++i)
+    {
+        // copying thread objects causes a compile error
+        /*
+        std::thread t(printHello);
+        threads.push_back(t); 
+        */
+
+        // moving thread objects will work
+        threads.emplace_back(std::thread(printHello));
+    }
+
+    // do something in main()
+    std::cout << "Hello from Main thread #" << std::this_thread::get_id() << std::endl;
+
+    // call join on all thread objects using a range-based loop
+    for (auto &t : threads)
+        t.join();
+
+    return 0;
+}
+```
+![alt text](image-889.png)
+![alt text](image-891.png)
+```C++
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <random>
+#include <vector>
+
+int main()
+{
+    // create threads
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        // create new thread from a Lambda
+        threads.emplace_back([&i]() {
+
+            // wait for certain amount of time
+            std::this_thread::sleep_for(std::chrono::milliseconds(10 * i));
+
+            // perform work
+            std::cout << "Hello from Worker thread #" << i << std::endl;
+        });
+    }
+
+    // do something in main()
+    std::cout << "Hello from Main thread" << std::endl;
+
+    // call join on all thread objects using a range-based loop
+    for (auto &t : threads)
+        t.join();
+
+    return 0;
+}
+```
+![alt text](image-892.png)
+![alt text](image-893.png)
+![alt text](image-894.png)
+
+
+
+
+
+![alt text](image-895.png)
+![alt text](image-896.png)
+![alt text](image-897.png)
+```C++
+#include <iostream>
+#include <thread>
+#include <future>
+
+void modifyMessage(std::promise<std::string> && prms, std::string message)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(4000)); // simulate work
+    std::string modifiedMessage = message + " has been modified"; 
+    prms.set_value(modifiedMessage);
+}
+
+int main()
+{
+    // define message
+    std::string messageToThread = "My Message";
+
+    // create promise and future
+    std::promise<std::string> prms;
+    std::future<std::string> ftr = prms.get_future();
+
+    // start thread and pass promise as argument
+    std::thread t(modifyMessage, std::move(prms), messageToThread);
+
+    // print original message to console
+    std::cout << "Original message from main(): " << messageToThread << std::endl;
+
+    // retrieve modified message via future and print to console
+    std::string messageFromThread = ftr.get();
+    std::cout << "Modified message from thread(): " << messageFromThread << std::endl;
+
+    // thread barrier
+    t.join();
+
+    return 0;
+}
+
+```
+![alt text](image-898.png)
+![alt text](image-899.png)
+```C++
+#include <iostream>
+#include <thread>
+#include <future>
+#include <cmath>
+
+void computeSqrt(std::promise<double> &&prms, double input)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000)); // simulate work
+    double output = sqrt(input);
+    prms.set_value(output);
+}
+
+int main()
+{
+    // define input data
+    double inputData = 42.0;
+
+    // create promise and future
+    std::promise<double> prms;
+    std::future<double> ftr = prms.get_future();
+
+    // start thread and pass promise as argument
+    std::thread t(computeSqrt, std::move(prms), inputData);
+
+// Student task STARTS here
+
+// Student task ENDS here    
+
+    // thread barrier
+    t.join();
+
+    return 0;
+}
+
+```
+![alt text](image-900.png)
+![alt text](image-901.png)
